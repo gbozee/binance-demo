@@ -3,3 +3,6 @@ venv
 startup.sh
 __pycache__
 *.env
+*config.env
+*.db
+app/my_stuff

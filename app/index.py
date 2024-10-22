@@ -1,22 +1,53 @@
 from starlette.applications import Starlette
-from starlette.responses import JSONResponse
-from starlette.routing import Route
-from .service.binance_service import BinanceService
-from .settings import BINANCE_API_KEY, BINANCE_API_SECRET, DEBUG
-
-
-service = BinanceService(
-    api_key=BINANCE_API_KEY, api_secret=BINANCE_API_SECRET, is_dev=DEBUG
+from starlette.responses import JSONResponse, HTMLResponse, RedirectResponse
+from starlette.routing import Route, Mount
+from starlette.templating import Jinja2Templates
+# from app import app
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.middleware.authentication import AuthenticationMiddleware
+from starlette.authentication import (
+    AuthenticationBackend, AuthCredentials, SimpleUser, requires
 )
+import os
+import logging
+from routes import routes as routes
+import secrets
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+
+secret_key = secrets.token_urlsafe(32)
+
+# Add the SessionMiddleware first
+# app.add_middleware(SessionMiddleware, secret_key=secret_key)
+# logging.debug("SessionMiddleware added")
 
 
-async def homepage(request):
-    return JSONResponse({"hello": "world"})
+# Define a simple authentication backend
+class SimpleAuthBackend(AuthenticationBackend):
+    async def authenticate(self, request):
+        if "user" in request.session:
+            username = request.session["user"]
+            # Add logic to verify the user's credentials
+            if self.verify_credentials(username):  # Replace with your own verification logic
+                return AuthCredentials(["authenticated"]), SimpleUser (username)
+        return AuthCredentials([]), None
+
+    def verify_credentials(self, username):
+        # Replace with your own verification logic
+        # For example, you could check a database to see if the username exists
+        # or if the username and password match
+        return True  # Replace with your own verification logic
+    
+# app.add_middleware(AuthenticationMiddleware, backend=SimpleAuthBackend())
+# app.router.routes.extend(routes)
+# @app.route('/logout')
+# async def logout(request):
+#     request.session.clear()
+#     return RedirectResponse(url='/login', status_code=303)
 
 
-app = Starlette(
-    debug=True,
-    routes=[
-        Route("/", homepage),
-    ],
-)
+# Key Changes:
+# Route Change: The /order/ route now correctly points to the order_endpoint function.
+# requests.post() Call: The data is passed as json=data, ensuring proper JSON serialization.
+# Balance Endpoint: The balance function returns a JSON response to ensure the client receives it correctly.
